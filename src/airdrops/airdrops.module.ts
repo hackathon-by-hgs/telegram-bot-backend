@@ -12,4 +12,6 @@ import { CryptoRankSource } from './sources/cryptorank.source';
   controllers: [AirdropsController],
   exports: [AirdropsService],
 })
-export class AirdropsModule {}
+
+
+export class AirdropsModule { }
