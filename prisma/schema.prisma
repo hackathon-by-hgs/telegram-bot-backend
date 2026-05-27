@@ -1,0 +1,106 @@
+// SwiftyDrop Guard — Prisma schema
+// Maps directly to the DB sections of index.md (users, airdrops, tasks, user_stats, referrals, security_reports).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  telegramId    String   @unique
+  username      String?
+  walletAddress String?  @unique
+  referralCode  String   @unique
+  referredById  String?
+  referredBy    User?    @relation("Referrals", fields: [referredById], references: [id])
+  referrals     User[]   @relation("Referrals")
+  createdAt     DateTime @default(now())
+
+  stats             UserStats?
+  tasks             AirdropTask[]
+  referralsGranted  Referral[] @relation("ReferralReferrer")
+  referralsReceived Referral[] @relation("ReferralReferred")
+  notifications     Notification[]
+}
+
+model UserStats {
+  userId String   @id
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xp     Int      @default(0)
+  streak Int      @default(0)
+  level  Int      @default(1)
+  badges String[] @default([])
+  lastActiveAt DateTime @default(now())
+}
+
+model Airdrop {
+  id              String   @id @default(cuid())
+  externalId      String   @unique
+  name            String
+  description     String?
+  rewardEstimate  String?
+  deadline        DateTime?
+  category        String?
+  trustScore      Int?
+  difficulty      String?
+  socialLinks     Json?
+  source          String
+  createdAt       DateTime @default(now())
+
+  securityReports SecurityReport[]
+  airdropTasks    AirdropTask[]
+}
+
+model SecurityReport {
+  id              String   @id @default(cuid())
+  airdropId       String?
+  airdrop         Airdrop? @relation(fields: [airdropId], references: [id], onDelete: SetNull)
+  subject         String   // domain / contract / wallet
+  trustScore      Int
+  scamProbability Int
+  riskLevel       String   // low | medium | high
+  warnings        String[] @default([])
+  explanation     String
+  createdAt       DateTime @default(now())
+}
+
+model AirdropTask {
+  id          String   @id @default(cuid())
+  airdropId   String
+  airdrop     Airdrop  @relation(fields: [airdropId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String
+  status      String   @default("pending") // pending | in_progress | completed
+  progress    Int      @default(0)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, airdropId])
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  referrerId     String
+  referrer       User     @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId String   @unique
+  referredUser   User     @relation("ReferralReferred", fields: [referredUserId], references: [id], onDelete: Cascade)
+  rewardGranted  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   String   // telegram | push
+  type      String
+  payload   Json
+  status    String   @default("queued") // queued | sent | failed
+  createdAt DateTime @default(now())
+  sentAt    DateTime?
+}
