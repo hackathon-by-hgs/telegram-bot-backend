@@ -4,6 +4,7 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
+import { Agent } from 'node:https';
 import { ConfigService } from '@nestjs/config';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
@@ -79,7 +80,17 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    const bot = new Telegraf(token);
+    // Telegraf's default keepAlive agent does not enable Happy Eyeballs, so on
+    // hosts with broken IPv6 egress (e.g. WSL2) it pins the first (IPv6) address
+    // and every API call times out with an opaque error. Supplying an agent with
+    // `autoSelectFamily` races IPv4/IPv6 and keeps whichever connects.
+    const agent = new Agent({
+      keepAlive: true,
+      keepAliveMsecs: 10_000,
+      autoSelectFamily: true,
+    });
+
+    const bot = new Telegraf(token, { telegram: { agent } });
     this.registerHandlers(bot);
     bot.catch((err, ctx) => {
       this.log.error(`Unhandled error for ${ctx.updateType}: ${(err as Error).message}`);
