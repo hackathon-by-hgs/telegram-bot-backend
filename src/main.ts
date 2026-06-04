@@ -1,7 +1,14 @@
+import { setDefaultResultOrder } from 'node:dns';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+
+// Prefer IPv4 for all outbound DNS. Node defaults to "verbatim" ordering, which
+// tries AAAA (IPv6) first — fatal on hosts with broken IPv6 egress (e.g. WSL2),
+// where api.telegram.org / coingecko / etherscan calls fail with opaque socket
+// errors. This is a no-op on healthy dual-stack and IPv6-only hosts.
+setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,28 +25,6 @@ async function bootstrap() {
   const port = Number(process.env.PORT ?? 3000);
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('SwiftyDrop Guard API')
-    .setDescription(
-      [
-        'Backend API powering the SwiftyDrop Guard Telegram Mini App.',
-        '',
-        '**Modules:**',
-        '- `auth` — Telegram WebApp initData verification',
-        '- `users` — user profile & wallet attachment',
-        '- `airdrops` — aggregated airdrop catalogue',
-        '- `security` — airdrop & wallet risk analysis',
-        '- `wallet` — health score, dangerous approvals, suspicious contracts',
-        '- `tasks` — per-user airdrop checklist',
-        '- `gamification` — XP, levels, streaks, badges, leaderboard',
-        '- `referrals` — referral graph & reward grants',
-        '- `crypto` — CoinGecko price & trending lookups',
-        '- `notifications` — Telegram delivery with persist-then-send',
-        '',
-        '**Auth:** the only authenticated endpoint is `POST /auth/telegram` (validates Telegram WebApp `initData` HMAC). All other endpoints currently accept `userId`/`address` directly in the body or path; the frontend is expected to scope calls to the signed-in user.',
-        '',
-        '**Base URL:** all routes are prefixed with `/api`.',
-      ].join('\n'),
-    )
     .setVersion('0.0.1')
     .addServer(`http://localhost:${port}`, 'Local dev')
     .addTag('auth', 'Telegram Mini App authentication')

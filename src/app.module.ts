@@ -19,6 +19,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AlertsModule } from './alerts/alerts.module';
     NotificationsModule,
     ReferralsModule,
     AlertsModule,
+    TelegramBotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
