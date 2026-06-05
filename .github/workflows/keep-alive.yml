@@ -10,7 +10,7 @@ name: Keep Render Awake
 #    10-minute cadence to keep a safety margin under Render's 15-minute window.
 on:
   schedule:
-    - cron: '*/4 * * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch: {} # lets you trigger a manual ping from the Actions tab
 
 # If a run is still going when the next is scheduled, cancel the older one
