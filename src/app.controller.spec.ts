@@ -48,7 +48,10 @@ describe('AppController', () => {
 
       expect(report.ready).toBe(false);
       expect(report.status).toBe('degraded');
-      expect(report.checks.database).toEqual({ status: 'down', error: 'connection refused' });
+      expect(report.checks.database).toEqual({
+        status: 'down',
+        error: 'connection refused',
+      });
       expect(res.status).toHaveBeenCalledWith(503);
     });
   });

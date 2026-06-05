@@ -13,7 +13,10 @@ export class PriceQueryDto {
 }
 
 export class PriceResponseDto {
-  @ApiProperty({ description: 'CoinGecko coin id (echoed back).', example: 'ethereum' })
+  @ApiProperty({
+    description: 'CoinGecko coin id (echoed back).',
+    example: 'ethereum',
+  })
   id!: string;
 
   @ApiProperty({ description: 'Quote currency (echoed back).', example: 'usd' })

@@ -15,7 +15,10 @@ export const DEFAULT_TASK_TEMPLATE = [
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService, private readonly events: EventEmitter2) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+  ) {}
 
   async forUser(userId: string) {
     return this.prisma.airdropTask.findMany({
@@ -27,20 +30,30 @@ export class TasksService {
 
   /** Lazily provisions the default template per user/airdrop pair. */
   async ensureChecklist(userId: string, airdropId: string) {
-    const existing = await this.prisma.airdropTask.findFirst({ where: { userId, airdropId } });
-    if (existing) return this.prisma.airdropTask.findMany({ where: { userId, airdropId } });
+    const existing = await this.prisma.airdropTask.findFirst({
+      where: { userId, airdropId },
+    });
+    if (existing)
+      return this.prisma.airdropTask.findMany({ where: { userId, airdropId } });
 
     await this.prisma.airdropTask.createMany({
-      data: DEFAULT_TASK_TEMPLATE.map((label) => ({ userId, airdropId, label })),
+      data: DEFAULT_TASK_TEMPLATE.map((label) => ({
+        userId,
+        airdropId,
+        label,
+      })),
     });
     return this.prisma.airdropTask.findMany({ where: { userId, airdropId } });
   }
 
   async update(taskId: string, patch: { status?: string; progress?: number }) {
-    const task = await this.prisma.airdropTask.findUnique({ where: { id: taskId } });
+    const task = await this.prisma.airdropTask.findUnique({
+      where: { id: taskId },
+    });
     if (!task) throw new NotFoundException();
 
-    const willComplete = patch.status === 'completed' && task.status !== 'completed';
+    const willComplete =
+      patch.status === 'completed' && task.status !== 'completed';
     const updated = await this.prisma.airdropTask.update({
       where: { id: taskId },
       data: {

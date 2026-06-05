@@ -18,13 +18,29 @@ export function analyzeLiquidity(token?: Record<string, unknown>): Signal[] {
   const liqUsd = Number(token.liquidityUsd ?? 0);
   const volume24h = Number(token.volume24h ?? 0);
 
-  if (liqLocked) out.push({ source: 'liquidity', positive: 0.4, negative: 0, detail: 'Liquidity locked' });
+  if (liqLocked)
+    out.push({
+      source: 'liquidity',
+      positive: 0.4,
+      negative: 0,
+      detail: 'Liquidity locked',
+    });
   else if (liqUsd > 0)
-    out.push({ source: 'liquidity', positive: 0, negative: 0.5, warning: 'Liquidity unlocked' });
+    out.push({
+      source: 'liquidity',
+      positive: 0,
+      negative: 0.5,
+      warning: 'Liquidity unlocked',
+    });
 
   // Volume anomaly: > 5x liquidity in a single day = wash trading suspicion.
   if (liqUsd > 0 && volume24h > liqUsd * 5) {
-    out.push({ source: 'liquidity', positive: 0, negative: 0.4, warning: 'Suspicious volume/liquidity ratio' });
+    out.push({
+      source: 'liquidity',
+      positive: 0,
+      negative: 0.4,
+      warning: 'Suspicious volume/liquidity ratio',
+    });
   }
   return out;
 }
@@ -35,7 +51,13 @@ export function analyzeOwnership(token?: Record<string, unknown>): Signal[] {
   const topHolderPct = Number(token.topHolderPct ?? 0);
   const renounced = Boolean(token.ownershipRenounced);
 
-  if (renounced) out.push({ source: 'ownership', positive: 0.4, negative: 0, detail: 'Ownership renounced' });
+  if (renounced)
+    out.push({
+      source: 'ownership',
+      positive: 0.4,
+      negative: 0,
+      detail: 'Ownership renounced',
+    });
   if (topHolderPct >= 50)
     out.push({
       source: 'ownership',
@@ -59,9 +81,19 @@ export function analyzeSocial(links?: AnalysisInput['socialLinks']): Signal[] {
   const out: Signal[] = [];
   const count = Object.keys(links).length;
   if (count === 0) {
-    out.push({ source: 'social', positive: 0, negative: 0.3, warning: 'No social presence' });
+    out.push({
+      source: 'social',
+      positive: 0,
+      negative: 0.3,
+      warning: 'No social presence',
+    });
   } else if (count >= 3) {
-    out.push({ source: 'social', positive: 0.2, negative: 0, detail: 'Multi-channel social presence' });
+    out.push({
+      source: 'social',
+      positive: 0.2,
+      negative: 0,
+      detail: 'Multi-channel social presence',
+    });
   }
 
   // Spec hint: fake engagement detection. Without API access we flag suspicious patterns

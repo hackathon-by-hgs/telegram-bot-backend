@@ -1,5 +1,5 @@
 export interface NormalizedAirdrop {
-  externalId: string;        // "${source}:${slug}" — idempotency key
+  externalId: string; // "${source}:${slug}" — idempotency key
   name: string;
   description?: string;
   rewardEstimate?: string;

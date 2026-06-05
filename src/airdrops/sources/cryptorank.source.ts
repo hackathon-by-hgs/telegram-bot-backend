@@ -9,7 +9,10 @@ export class CryptoRankSource implements AirdropSource {
   readonly name = 'cryptorank';
   private readonly log = new Logger(CryptoRankSource.name);
 
-  constructor(private readonly http: HttpService, private readonly config: ConfigService) {}
+  constructor(
+    private readonly http: HttpService,
+    private readonly config: ConfigService,
+  ) {}
 
   async fetch(): Promise<NormalizedAirdrop[]> {
     const apiKey = this.config.get<string>('CRYPTORANK_API_KEY');

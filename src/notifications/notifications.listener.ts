@@ -22,8 +22,13 @@ export class NotificationsListener {
   }
 
   @OnEvent(EVENTS.AIRDROP_FLAGGED)
-  async onAirdropFlagged(payload: { airdropId: string; scamProbability: number }) {
-    const airdrop = await this.prisma.airdrop.findUnique({ where: { id: payload.airdropId } });
+  async onAirdropFlagged(payload: {
+    airdropId: string;
+    scamProbability: number;
+  }) {
+    const airdrop = await this.prisma.airdrop.findUnique({
+      where: { id: payload.airdropId },
+    });
     if (!airdrop) return;
     const users = await this.prisma.user.findMany({ select: { id: true } });
     await Promise.allSettled(
@@ -40,7 +45,9 @@ export class NotificationsListener {
 
   @OnEvent(EVENTS.WALLET_RISK_DETECTED)
   async onWalletRisk(payload: { address: string; score: number }) {
-    const user = await this.prisma.user.findUnique({ where: { walletAddress: payload.address } });
+    const user = await this.prisma.user.findUnique({
+      where: { walletAddress: payload.address },
+    });
     if (!user) return;
     await this.notifications.send({
       userId: user.id,

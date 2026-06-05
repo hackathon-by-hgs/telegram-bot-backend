@@ -1,7 +1,10 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
-import { SendNotificationDto, SendNotificationResponseDto } from './dto/notifications.dto';
+import {
+  SendNotificationDto,
+  SendNotificationResponseDto,
+} from './dto/notifications.dto';
 
 @ApiTags('notifications')
 @Controller('notifications')

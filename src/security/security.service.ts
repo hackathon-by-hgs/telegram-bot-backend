@@ -4,7 +4,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AnalysisInput, SecurityReportOutput, Signal } from './types';
 import { analyzeDomain } from './analyzers/domain.analyzer';
 import { ContractAnalyzer } from './analyzers/contract.analyzer';
-import { analyzeLiquidity, analyzeOwnership, analyzeSocial } from './analyzers/heuristic.analyzer';
+import {
+  analyzeLiquidity,
+  analyzeOwnership,
+  analyzeSocial,
+} from './analyzers/heuristic.analyzer';
 import { aggregate } from './scoring';
 import { EVENTS } from '../events/event-names';
 
@@ -16,7 +20,9 @@ export class SecurityService {
     private readonly contract: ContractAnalyzer,
   ) {}
 
-  async analyzeAirdrop(input: AnalysisInput & { airdropId?: string }): Promise<SecurityReportOutput> {
+  async analyzeAirdrop(
+    input: AnalysisInput & { airdropId?: string },
+  ): Promise<SecurityReportOutput> {
     const signals: Signal[] = [
       ...analyzeDomain(input.domain),
       ...(await this.contract.analyze(input.contractAddress, input.chain)),

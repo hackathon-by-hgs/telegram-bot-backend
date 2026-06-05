@@ -8,13 +8,20 @@ import {
 } from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
 import { UsersService } from '../users/users.service';
-import { SUPPORTED_CHAINS, WalletAnalysisDto, WalletConnectDto } from './dto/wallet.dto';
+import {
+  SUPPORTED_CHAINS,
+  WalletAnalysisDto,
+  WalletConnectDto,
+} from './dto/wallet.dto';
 import { UserDto } from '../common/dto/models.dto';
 
 @ApiTags('wallet')
 @Controller('wallet')
 export class WalletController {
-  constructor(private readonly wallet: WalletService, private readonly users: UsersService) {}
+  constructor(
+    private readonly wallet: WalletService,
+    private readonly users: UsersService,
+  ) {}
 
   @Post('connect')
   @ApiOperation({

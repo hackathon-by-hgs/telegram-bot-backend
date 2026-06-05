@@ -27,7 +27,10 @@ export class AppService {
   }
 
   /** Cheapest possible round-trip that proves the connection pool is live. */
-  private async pingDatabase(): Promise<{ status: 'up' | 'down'; error?: string }> {
+  private async pingDatabase(): Promise<{
+    status: 'up' | 'down';
+    error?: string;
+  }> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
       return { status: 'up' };

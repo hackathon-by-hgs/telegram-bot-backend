@@ -23,7 +23,9 @@ export class AuthController {
   })
   @ApiBody({ type: TelegramAuthDto })
   @ApiOkResponse({ type: TelegramAuthResponseDto })
-  @ApiUnauthorizedResponse({ description: 'initData missing, malformed, or HMAC verification failed.' })
+  @ApiUnauthorizedResponse({
+    description: 'initData missing, malformed, or HMAC verification failed.',
+  })
   telegram(@Body() dto: TelegramAuthDto) {
     return this.auth.authenticateTelegram(dto.initData ?? '');
   }

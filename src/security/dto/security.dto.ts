@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString, Matches } from 'class-validator';
-import { SUPPORTED_CHAINS, type SupportedChain } from '../../wallet/dto/wallet.dto';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
+import {
+  SUPPORTED_CHAINS,
+  type SupportedChain,
+} from '../../wallet/dto/wallet.dto';
 
 export const RISK_LEVELS = ['low', 'medium', 'high'] as const;
 export type RiskLevelDto = (typeof RISK_LEVELS)[number];
@@ -20,7 +30,9 @@ export class AnalyzeAirdropDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^0x[a-fA-F0-9]{40}$/, { message: 'contractAddress must be a valid 0x-prefixed EVM address' })
+  @Matches(/^0x[a-fA-F0-9]{40}$/, {
+    message: 'contractAddress must be a valid 0x-prefixed EVM address',
+  })
   contractAddress?: string;
 
   @ApiPropertyOptional({
@@ -29,7 +41,7 @@ export class AnalyzeAirdropDto {
     description: 'Chain hint for the contract lookup.',
   })
   @IsOptional()
-  @IsIn(SUPPORTED_CHAINS as unknown as string[])
+  @IsIn(SUPPORTED_CHAINS)
   chain?: SupportedChain;
 
   @ApiPropertyOptional({
@@ -44,7 +56,8 @@ export class AnalyzeAirdropDto {
   tokenInfo?: Record<string, unknown>;
 
   @ApiPropertyOptional({
-    description: 'Optional on-chain behaviour summary for the contract deployer.',
+    description:
+      'Optional on-chain behaviour summary for the contract deployer.',
     type: 'object',
     additionalProperties: true,
     example: { txCount: 832, ageDays: 412 },
@@ -57,7 +70,10 @@ export class AnalyzeAirdropDto {
     description: 'Project social links (key → URL).',
     type: 'object',
     additionalProperties: { type: 'string' },
-    example: { twitter: 'https://x.com/zksync', discord: 'https://discord.gg/zksync' },
+    example: {
+      twitter: 'https://x.com/zksync',
+      discord: 'https://discord.gg/zksync',
+    },
   })
   @IsOptional()
   @IsObject()
@@ -80,20 +96,36 @@ export class AnalyzeWalletDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^0x[a-fA-F0-9]{40}$/, { message: 'address must be a valid 0x-prefixed EVM address' })
+  @Matches(/^0x[a-fA-F0-9]{40}$/, {
+    message: 'address must be a valid 0x-prefixed EVM address',
+  })
   address!: string;
 
-  @ApiPropertyOptional({ enum: SUPPORTED_CHAINS, example: 'eth', default: 'eth' })
+  @ApiPropertyOptional({
+    enum: SUPPORTED_CHAINS,
+    example: 'eth',
+    default: 'eth',
+  })
   @IsOptional()
-  @IsIn(SUPPORTED_CHAINS as unknown as string[])
+  @IsIn(SUPPORTED_CHAINS)
   chain?: SupportedChain;
 }
 
 export class SecurityReportOutputDto {
-  @ApiProperty({ description: 'Composite trust score 0-100.', example: 78, minimum: 0, maximum: 100 })
+  @ApiProperty({
+    description: 'Composite trust score 0-100.',
+    example: 78,
+    minimum: 0,
+    maximum: 100,
+  })
   trust_score!: number;
 
-  @ApiProperty({ description: 'Composite scam probability 0-100.', example: 14, minimum: 0, maximum: 100 })
+  @ApiProperty({
+    description: 'Composite scam probability 0-100.',
+    example: 14,
+    minimum: 0,
+    maximum: 100,
+  })
   scam_probability!: number;
 
   @ApiProperty({ enum: RISK_LEVELS, example: 'low' })
@@ -108,13 +140,15 @@ export class SecurityReportOutputDto {
 
   @ApiProperty({
     description: 'One-line guidance for the end user.',
-    example: 'Looks legitimate. Proceed with caution; never approve unlimited spend.',
+    example:
+      'Looks legitimate. Proceed with caution; never approve unlimited spend.',
   })
   recommendation!: string;
 
   @ApiProperty({
     description: 'Long-form explanation citing each signal.',
-    example: 'Domain registered 412 days ago, contract verified on Etherscan, 12k+ unique holders…',
+    example:
+      'Domain registered 412 days ago, contract verified on Etherscan, 12k+ unique holders…',
   })
   explanation!: string;
 }

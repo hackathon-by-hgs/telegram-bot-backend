@@ -39,13 +39,21 @@ export class AirdropsService {
 
   /** Cron-driven sync — fans out across configured sources in parallel and upserts. */
   async syncAll() {
-    const settled = await Promise.allSettled(this.sources.map((s) => s.fetch()));
-    const flattened = settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
-    this.log.log(`Fetched ${flattened.length} candidates from ${this.sources.length} sources`);
+    const settled = await Promise.allSettled(
+      this.sources.map((s) => s.fetch()),
+    );
+    const flattened = settled.flatMap((r) =>
+      r.status === 'fulfilled' ? r.value : [],
+    );
+    this.log.log(
+      `Fetched ${flattened.length} candidates from ${this.sources.length} sources`,
+    );
 
     let created = 0;
     for (const a of flattened) {
-      const existing = await this.prisma.airdrop.findUnique({ where: { externalId: a.externalId } });
+      const existing = await this.prisma.airdrop.findUnique({
+        where: { externalId: a.externalId },
+      });
       if (existing) continue;
       const row = await this.prisma.airdrop.create({
         data: {
@@ -61,7 +69,10 @@ export class AirdropsService {
         },
       });
       created++;
-      this.events.emit(EVENTS.AIRDROP_CREATED, { airdropId: row.id, name: row.name });
+      this.events.emit(EVENTS.AIRDROP_CREATED, {
+        airdropId: row.id,
+        name: row.name,
+      });
     }
     return { fetched: flattened.length, created };
   }

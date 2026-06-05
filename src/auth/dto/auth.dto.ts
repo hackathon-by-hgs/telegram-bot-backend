@@ -17,7 +17,8 @@ export class TelegramAuthDto {
 export class TelegramAuthResponseDto {
   @ApiProperty({
     type: () => UserDto,
-    description: 'The user record matching the Telegram identity (created on first sign-in).',
+    description:
+      'The user record matching the Telegram identity (created on first sign-in).',
   })
   user!: UserDto;
 }

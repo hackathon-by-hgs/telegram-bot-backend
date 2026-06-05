@@ -1,5 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CryptoService } from './crypto.service';
 import { PriceResponseDto, TrendingCoinDto } from './dto/crypto.dto';
 
@@ -15,7 +21,11 @@ export class CryptoController {
       'Returns the spot price for `coinId` in the requested quote currency. Results are cached in-memory for 60s. ' +
       'Returns `value: null` if the upstream call fails; the request never errors.',
   })
-  @ApiParam({ name: 'coinId', description: 'CoinGecko coin id', example: 'ethereum' })
+  @ApiParam({
+    name: 'coinId',
+    description: 'CoinGecko coin id',
+    example: 'ethereum',
+  })
   @ApiQuery({
     name: 'vs',
     required: false,
@@ -24,13 +34,16 @@ export class CryptoController {
   })
   @ApiOkResponse({ type: PriceResponseDto })
   price(@Param('coinId') id: string, @Query('vs') vs?: string) {
-    return this.crypto.price(id, vs ?? 'usd').then((value) => ({ id, vs: vs ?? 'usd', value }));
+    return this.crypto
+      .price(id, vs ?? 'usd')
+      .then((value) => ({ id, vs: vs ?? 'usd', value }));
   }
 
   @Get('trending')
   @ApiOperation({
     summary: 'Currently trending coins (CoinGecko)',
-    description: 'Returns the top trending coins. Empty array on upstream failure — never errors.',
+    description:
+      'Returns the top trending coins. Empty array on upstream failure — never errors.',
   })
   @ApiOkResponse({ type: [TrendingCoinDto] })
   trending() {

@@ -29,10 +29,13 @@ export class ContractAnalyzer {
 
     try {
       const { data } = await firstValueFrom(
-        this.http.get(`https://api.gopluslabs.io/api/v1/token_security/${chainId}`, {
-          params: { contract_addresses: contractAddress.toLowerCase() },
-          timeout: 6000,
-        }),
+        this.http.get(
+          `https://api.gopluslabs.io/api/v1/token_security/${chainId}`,
+          {
+            params: { contract_addresses: contractAddress.toLowerCase() },
+            timeout: 6000,
+          },
+        ),
       );
       const info = data?.result?.[contractAddress.toLowerCase()];
       if (!info) return [];
@@ -40,7 +43,14 @@ export class ContractAnalyzer {
     } catch (err) {
       this.log.warn(`goplus failed: ${(err as Error).message}`);
       // Fail open with neutral signal — never block a request on a third-party.
-      return [{ source: 'contract', positive: 0, negative: 0.05, warning: 'Contract scan unavailable' }];
+      return [
+        {
+          source: 'contract',
+          positive: 0,
+          negative: 0.05,
+          warning: 'Contract scan unavailable',
+        },
+      ];
     }
   }
 
@@ -49,22 +59,52 @@ export class ContractAnalyzer {
     const truthy = (k: string) => info[k] === '1';
 
     if (truthy('is_honeypot')) {
-      out.push({ source: 'contract', positive: 0, negative: 1, warning: 'Honeypot detected' });
+      out.push({
+        source: 'contract',
+        positive: 0,
+        negative: 1,
+        warning: 'Honeypot detected',
+      });
     }
     if (truthy('can_take_back_ownership')) {
-      out.push({ source: 'contract', positive: 0, negative: 0.6, warning: 'Owner can reclaim ownership' });
+      out.push({
+        source: 'contract',
+        positive: 0,
+        negative: 0.6,
+        warning: 'Owner can reclaim ownership',
+      });
     }
     if (truthy('hidden_owner')) {
-      out.push({ source: 'contract', positive: 0, negative: 0.5, warning: 'Hidden owner' });
+      out.push({
+        source: 'contract',
+        positive: 0,
+        negative: 0.5,
+        warning: 'Hidden owner',
+      });
     }
     if (truthy('is_proxy')) {
-      out.push({ source: 'contract', positive: 0, negative: 0.2, warning: 'Proxy contract — upgradeable' });
+      out.push({
+        source: 'contract',
+        positive: 0,
+        negative: 0.2,
+        warning: 'Proxy contract — upgradeable',
+      });
     }
     if (truthy('is_open_source')) {
-      out.push({ source: 'contract', positive: 0.3, negative: 0, detail: 'Open source' });
+      out.push({
+        source: 'contract',
+        positive: 0.3,
+        negative: 0,
+        detail: 'Open source',
+      });
     }
     if (truthy('is_mintable')) {
-      out.push({ source: 'contract', positive: 0, negative: 0.4, warning: 'Mintable supply' });
+      out.push({
+        source: 'contract',
+        positive: 0,
+        negative: 0.4,
+        warning: 'Mintable supply',
+      });
     }
     return out;
   }

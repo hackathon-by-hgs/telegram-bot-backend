@@ -1,8 +1,8 @@
 export type RiskLevel = 'low' | 'medium' | 'high';
 
 export interface SecurityReportOutput {
-  trust_score: number;       // 0-100
-  scam_probability: number;  // 0-100
+  trust_score: number; // 0-100
+  scam_probability: number; // 0-100
   risk_level: RiskLevel;
   warnings: string[];
   recommendation: string;
@@ -12,7 +12,7 @@ export interface SecurityReportOutput {
 export interface AnalysisInput {
   domain?: string;
   contractAddress?: string;
-  chain?: string;             // eth | bsc | polygon | ...
+  chain?: string; // eth | bsc | polygon | ...
   tokenInfo?: Record<string, unknown>;
   walletBehavior?: Record<string, unknown>;
   socialLinks?: Record<string, string>;

@@ -1,16 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UserStatsDto {
-  @ApiProperty({ description: 'Foreign key to the owning user', example: 'ckxk7g2v90000abcd1234efgh' })
+  @ApiProperty({
+    description: 'Foreign key to the owning user',
+    example: 'ckxk7g2v90000abcd1234efgh',
+  })
   userId!: string;
 
   @ApiProperty({ description: 'Total XP earned', example: 1250, minimum: 0 })
   xp!: number;
 
-  @ApiProperty({ description: 'Current daily streak (consecutive days active)', example: 7, minimum: 0 })
+  @ApiProperty({
+    description: 'Current daily streak (consecutive days active)',
+    example: 7,
+    minimum: 0,
+  })
   streak!: number;
 
-  @ApiProperty({ description: 'Computed level from XP', example: 4, minimum: 1 })
+  @ApiProperty({
+    description: 'Computed level from XP',
+    example: 4,
+    minimum: 1,
+  })
   level!: number;
 
   @ApiProperty({
@@ -28,13 +39,23 @@ export class UserStatsDto {
 }
 
 export class UserDto {
-  @ApiProperty({ description: 'Internal CUID', example: 'ckxk7g2v90000abcd1234efgh' })
+  @ApiProperty({
+    description: 'Internal CUID',
+    example: 'ckxk7g2v90000abcd1234efgh',
+  })
   id!: string;
 
-  @ApiProperty({ description: 'Telegram numeric user ID, stringified', example: '123456789' })
+  @ApiProperty({
+    description: 'Telegram numeric user ID, stringified',
+    example: '123456789',
+  })
   telegramId!: string;
 
-  @ApiPropertyOptional({ description: 'Telegram @username (without @)', example: 'satoshi', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Telegram @username (without @)',
+    example: 'satoshi',
+    nullable: true,
+  })
   username!: string | null;
 
   @ApiPropertyOptional({
@@ -44,7 +65,10 @@ export class UserDto {
   })
   walletAddress!: string | null;
 
-  @ApiProperty({ description: 'Short opaque referral code', example: 'A1B2C3D4' })
+  @ApiProperty({
+    description: 'Short opaque referral code',
+    example: 'A1B2C3D4',
+  })
   referralCode!: string;
 
   @ApiPropertyOptional({
@@ -54,7 +78,10 @@ export class UserDto {
   })
   referredById!: string | null;
 
-  @ApiProperty({ description: 'When the user was first seen (ISO-8601)', example: '2026-05-20T10:00:00.000Z' })
+  @ApiProperty({
+    description: 'When the user was first seen (ISO-8601)',
+    example: '2026-05-20T10:00:00.000Z',
+  })
   createdAt!: string;
 }
 
@@ -67,13 +94,19 @@ export class AirdropDto {
   @ApiProperty({ example: 'ckxk7g2v90100abcd1234efgh' })
   id!: string;
 
-  @ApiProperty({ description: 'Source-scoped external identifier (unique)', example: 'cryptorank:zksync-launch' })
+  @ApiProperty({
+    description: 'Source-scoped external identifier (unique)',
+    example: 'cryptorank:zksync-launch',
+  })
   externalId!: string;
 
   @ApiProperty({ example: 'zkSync Airdrop' })
   name!: string;
 
-  @ApiPropertyOptional({ example: 'Long-form description of the campaign.', nullable: true })
+  @ApiPropertyOptional({
+    example: 'Long-form description of the campaign.',
+    nullable: true,
+  })
   description!: string | null;
 
   @ApiPropertyOptional({ example: '$50-$500', nullable: true })
@@ -86,7 +119,8 @@ export class AirdropDto {
   category!: string | null;
 
   @ApiPropertyOptional({
-    description: 'Cached trust score (0-100) from the most recent SecurityReport',
+    description:
+      'Cached trust score (0-100) from the most recent SecurityReport',
     example: 78,
     minimum: 0,
     maximum: 100,
@@ -116,10 +150,16 @@ export class AirdropTaskDto {
   @ApiProperty({ example: 'ckxk7g2v90200abcd1234efgh' })
   id!: string;
 
-  @ApiProperty({ description: 'FK to Airdrop', example: 'ckxk7g2v90100abcd1234efgh' })
+  @ApiProperty({
+    description: 'FK to Airdrop',
+    example: 'ckxk7g2v90100abcd1234efgh',
+  })
   airdropId!: string;
 
-  @ApiProperty({ description: 'FK to User', example: 'ckxk7g2v90000abcd1234efgh' })
+  @ApiProperty({
+    description: 'FK to User',
+    example: 'ckxk7g2v90000abcd1234efgh',
+  })
   userId!: string;
 
   @ApiProperty({ example: 'Bridge funds to L2' })
@@ -132,7 +172,12 @@ export class AirdropTaskDto {
   })
   status!: 'pending' | 'in_progress' | 'completed';
 
-  @ApiProperty({ description: 'Progress %, 0-100', example: 40, minimum: 0, maximum: 100 })
+  @ApiProperty({
+    description: 'Progress %, 0-100',
+    example: 40,
+    minimum: 0,
+    maximum: 100,
+  })
   progress!: number;
 
   @ApiPropertyOptional({ example: '2026-05-25T12:34:56.000Z', nullable: true })
@@ -149,12 +194,19 @@ export class HealthDto {
   @ApiProperty({ example: 'swiftydrop-guard-backend' })
   service!: string;
 
-  @ApiProperty({ description: 'ISO-8601 timestamp', example: '2026-05-27T21:42:00.000Z' })
+  @ApiProperty({
+    description: 'ISO-8601 timestamp',
+    example: '2026-05-27T21:42:00.000Z',
+  })
   ts!: string;
 }
 
 export class DependencyCheckDto {
-  @ApiProperty({ description: 'Whether the dependency answered', enum: ['up', 'down'], example: 'up' })
+  @ApiProperty({
+    description: 'Whether the dependency answered',
+    enum: ['up', 'down'],
+    example: 'up',
+  })
   status!: 'up' | 'down';
 
   @ApiPropertyOptional({
@@ -166,7 +218,10 @@ export class DependencyCheckDto {
 }
 
 export class ReadinessChecksDto {
-  @ApiProperty({ type: () => DependencyCheckDto, description: 'PostgreSQL reachability (SELECT 1)' })
+  @ApiProperty({
+    type: () => DependencyCheckDto,
+    description: 'PostgreSQL reachability (SELECT 1)',
+  })
   database!: DependencyCheckDto;
 }
 
@@ -178,7 +233,10 @@ export class ReadinessDto {
   })
   status!: string;
 
-  @ApiProperty({ description: 'True only when the service can fully serve traffic', example: true })
+  @ApiProperty({
+    description: 'True only when the service can fully serve traffic',
+    example: true,
+  })
   ready!: boolean;
 
   @ApiProperty({ example: 'swiftydrop-guard-backend' })
@@ -187,6 +245,9 @@ export class ReadinessDto {
   @ApiProperty({ type: () => ReadinessChecksDto })
   checks!: ReadinessChecksDto;
 
-  @ApiProperty({ description: 'ISO-8601 timestamp', example: '2026-05-27T21:42:00.000Z' })
+  @ApiProperty({
+    description: 'ISO-8601 timestamp',
+    example: '2026-05-27T21:42:00.000Z',
+  })
   ts!: string;
 }

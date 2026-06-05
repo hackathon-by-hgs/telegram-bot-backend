@@ -6,8 +6,9 @@ import {
 } from '@nestjs/common';
 import { Agent } from 'node:https';
 import { ConfigService } from '@nestjs/config';
-import { Context, Telegraf } from 'telegraf';
+import { Context, Telegraf, Markup } from 'telegraf';
 import { message } from 'telegraf/filters';
+import type { InlineKeyboardButton } from 'telegraf/types';
 
 import { UsersService } from '../users/users.service';
 import { AirdropsService } from '../airdrops/airdrops.service';
@@ -41,12 +42,24 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
   private botUsername?: string;
 
   /** Command list advertised to Telegram clients (the "/" menu) and `/help`. */
-  static readonly COMMANDS: ReadonlyArray<{ command: string; description: string }> = [
+  static readonly COMMANDS: ReadonlyArray<{
+    command: string;
+    description: string;
+  }> = [
     { command: 'start', description: 'Register & get your referral link' },
     { command: 'airdrops', description: 'Browse the latest airdrops' },
-    { command: 'airdrop', description: 'Airdrop details + security report — /airdrop <id>' },
-    { command: 'scan', description: 'Scan a domain or contract for scams — /scan <domain|0x...>' },
-    { command: 'wallet', description: 'Analyze wallet health — /wallet <0x address>' },
+    {
+      command: 'airdrop',
+      description: 'Airdrop details + security report — /airdrop <id>',
+    },
+    {
+      command: 'scan',
+      description: 'Scan a domain or contract for scams — /scan <domain|0x...>',
+    },
+    {
+      command: 'wallet',
+      description: 'Analyze wallet health — /wallet <0x address>',
+    },
     { command: 'price', description: 'Token price — /price <coin id>' },
     { command: 'trending', description: 'Trending coins right now' },
     { command: 'tasks', description: 'Your airdrop task checklist' },
@@ -93,7 +106,9 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     const bot = new Telegraf(token, { telegram: { agent } });
     this.registerHandlers(bot);
     bot.catch((err, ctx) => {
-      this.log.error(`Unhandled error for ${ctx.updateType}: ${(err as Error).message}`);
+      this.log.error(
+        `Unhandled error for ${ctx.updateType}: ${(err as Error).message}`,
+      );
     });
 
     // Fire-and-forget: launch() resolves only when the bot stops.
@@ -101,12 +116,16 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       .launch(() => {
         this.bot = bot;
         this.botUsername = bot.botInfo?.username;
-        this.log.log(`Interactive bot @${this.botUsername ?? '?'} launched (long polling).`);
+        this.log.log(
+          `Interactive bot @${this.botUsername ?? '?'} launched (long polling).`,
+        );
         bot.telegram
           .setMyCommands([...TelegramBotService.COMMANDS])
           .catch((e) => this.log.warn(`setMyCommands failed: ${e.message}`));
       })
-      .catch((err) => this.log.error(`Bot launch failed: ${(err as Error).message}`));
+      .catch((err) =>
+        this.log.error(`Bot launch failed: ${(err as Error).message}`),
+      );
 
     // Telegraf recommends stopping on process signals for clean polling shutdown.
     process.once('SIGINT', () => bot.stop('SIGINT'));
@@ -121,18 +140,59 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
   private registerHandlers(bot: Telegraf) {
     bot.start((ctx) => this.guard(ctx, () => this.onStart(ctx)));
-    bot.help((ctx) => ctx.reply(this.helpText()));
-    bot.command('airdrops', (ctx) => this.guard(ctx, () => this.onAirdrops(ctx)));
+    bot.help((ctx) => this.guard(ctx, () => this.onHelp(ctx)));
+    bot.command('airdrops', (ctx) =>
+      this.guard(ctx, () => this.onAirdrops(ctx)),
+    );
     bot.command('airdrop', (ctx) => this.guard(ctx, () => this.onAirdrop(ctx)));
     bot.command('scan', (ctx) => this.guard(ctx, () => this.onScan(ctx)));
     bot.command('wallet', (ctx) => this.guard(ctx, () => this.onWallet(ctx)));
     bot.command('price', (ctx) => this.guard(ctx, () => this.onPrice(ctx)));
-    bot.command('trending', (ctx) => this.guard(ctx, () => this.onTrending(ctx)));
+    bot.command('trending', (ctx) =>
+      this.guard(ctx, () => this.onTrending(ctx)),
+    );
     bot.command('tasks', (ctx) => this.guard(ctx, () => this.onTasks(ctx)));
     bot.command('profile', (ctx) => this.guard(ctx, () => this.onProfile(ctx)));
     bot.command('me', (ctx) => this.guard(ctx, () => this.onProfile(ctx)));
-    bot.command('leaderboard', (ctx) => this.guard(ctx, () => this.onLeaderboard(ctx)));
-    bot.command('referrals', (ctx) => this.guard(ctx, () => this.onReferrals(ctx)));
+    bot.command('leaderboard', (ctx) =>
+      this.guard(ctx, () => this.onLeaderboard(ctx)),
+    );
+    bot.command('referrals', (ctx) =>
+      this.guard(ctx, () => this.onReferrals(ctx)),
+    );
+
+    // Inline-button callbacks. Buttons carry a compact `verb:arg` token in their
+    // callback_data; we route on the verb and reuse the same render helpers the
+    // slash-commands use, so a tap and a typed command produce identical output.
+    // `guardCb` also acks the tap so Telegram clears the button's spinner.
+    bot.action('nav:menu', (ctx) =>
+      this.guardCb(ctx, () => this.onStart(ctx, true)),
+    );
+    bot.action('nav:airdrops', (ctx) =>
+      this.guardCb(ctx, () => this.onAirdrops(ctx, true)),
+    );
+    bot.action('nav:profile', (ctx) =>
+      this.guardCb(ctx, () => this.onProfile(ctx, true)),
+    );
+    bot.action('nav:leaderboard', (ctx) =>
+      this.guardCb(ctx, () => this.onLeaderboard(ctx, true)),
+    );
+    bot.action('nav:tasks', (ctx) =>
+      this.guardCb(ctx, () => this.onTasks(ctx, true)),
+    );
+    bot.action('nav:trending', (ctx) =>
+      this.guardCb(ctx, () => this.onTrending(ctx, true)),
+    );
+    bot.action('nav:scan', (ctx) =>
+      this.guardCb(ctx, () => this.onScanPrompt(ctx)),
+    );
+    bot.action(/^airdrop:(.+)$/, (ctx) =>
+      this.guardCb(ctx, () => this.onAirdrop(ctx, true, ctx.match[1])),
+    );
+    bot.action(/^scan:(.+)$/, (ctx) =>
+      this.guardCb(ctx, () => this.onScan(ctx, true, ctx.match[1])),
+    );
+
     bot.on(message('text'), (ctx) =>
       ctx.reply('Unknown command. Send /help to see what I can do.'),
     );
@@ -144,55 +204,126 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       await fn();
     } catch (err) {
       this.log.warn(`handler failed: ${(err as Error).message}`);
-      await ctx.reply('⚠️ Something went wrong handling that. Please try again.');
+      await ctx.reply(
+        '⚠️ Something went wrong handling that. Please try again.',
+      );
     }
+  }
+
+  /**
+   * Like `guard`, but for inline-button callbacks. We always `answerCbQuery()`
+   * in a `finally` so the tapped button stops showing its loading spinner —
+   * Telegram nags (and eventually errors) if a callback goes unanswered.
+   */
+  private async guardCb(ctx: Context, fn: () => Promise<void>) {
+    try {
+      await fn();
+    } catch (err) {
+      this.log.warn(`callback failed: ${(err as Error).message}`);
+    } finally {
+      await ctx.answerCbQuery().catch(() => undefined);
+    }
+  }
+
+  /**
+   * Render a screen. From a slash-command we send a fresh message; from a
+   * button tap we edit the message the button is attached to, giving a
+   * single-message "drill in / back" navigation. Editing can fail (message too
+   * old, or identical content) so we fall back to a plain reply.
+   */
+  private async present(
+    ctx: Context,
+    text: string,
+    keyboard: ReturnType<typeof Markup.inlineKeyboard> | undefined,
+    edit: boolean,
+  ) {
+    const extra = { parse_mode: 'Markdown' as const, ...(keyboard ?? {}) };
+    if (edit) {
+      try {
+        await ctx.editMessageText(text, extra);
+        return;
+      } catch {
+        // fall through to reply
+      }
+    }
+    await ctx.reply(text, extra);
   }
 
   // ── Commands ──────────────────────────────────────────────────────────────
 
-  private async onStart(ctx: Context) {
+  private async onStart(ctx: Context, edit = false) {
     const user = await this.resolveUser(ctx);
     const link = this.referralLink(user.referralCode);
-    await ctx.reply(
-      [
-        '🛡️ *Welcome to SwiftyDrop Guard!*',
-        '',
-        'Discover legit airdrops and stay safe from scams.',
-        '',
-        `Your referral code: \`${user.referralCode}\``,
-        link ? `Invite friends: ${link}` : '',
-        '',
-        this.helpText(),
-      ]
-        .filter(Boolean)
-        .join('\n'),
-      { parse_mode: 'Markdown' },
+    const text = [
+      '🛡️ *Welcome to SwiftyDrop Guard!*',
+      '',
+      'Discover legit airdrops and stay safe from scams.',
+      '',
+      `🎟️ Your referral code: \`${user.referralCode}\``,
+      '',
+      'Tap a button below, or send /help for the full command list.',
+    ].join('\n');
+    await this.present(ctx, text, this.mainMenu(link), edit);
+  }
+
+  private async onHelp(ctx: Context) {
+    await this.present(ctx, this.helpText(), this.mainMenu(), false);
+  }
+
+  private async onAirdrops(ctx: Context, edit = false) {
+    const list = await this.airdrops.list({ take: 8 });
+    if (!list.length) {
+      await this.present(
+        ctx,
+        'No airdrops indexed yet — check back soon. 🔄',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('🔄 Refresh', 'nav:airdrops')],
+        ]),
+        edit,
+      );
+      return;
+    }
+    // One button per airdrop; the score badge gives an at-a-glance trust read.
+    const rows = list.map((a) => {
+      const badge =
+        a.trustScore != null
+          ? `${this.trustEmoji(a.trustScore)} ${a.trustScore}`
+          : '•';
+      return [
+        Markup.button.callback(
+          `🪂 ${this.truncate(a.name, 26)}  ·  ${badge}`,
+          `airdrop:${a.id}`,
+        ),
+      ];
+    });
+    rows.push([
+      Markup.button.callback('🔄 Refresh', 'nav:airdrops'),
+      Markup.button.callback('« Menu', 'nav:menu'),
+    ]);
+    await this.present(
+      ctx,
+      '🪂 *Latest airdrops*\n\nTap one to see its details and trust score:',
+      Markup.inlineKeyboard(rows),
+      edit,
     );
   }
 
-  private async onAirdrops(ctx: Context) {
-    const list = await this.airdrops.list({ take: 10 });
-    if (!list.length) {
-      await ctx.reply('No airdrops indexed yet — check back soon. 🔄');
-      return;
-    }
-    const lines = list.map((a) => {
-      const trust = a.trustScore != null ? ` · trust ${a.trustScore}/100` : '';
-      const reward = a.rewardEstimate ? ` · ${a.rewardEstimate}` : '';
-      return `• *${this.md(a.name)}*${reward}${trust}\n  /airdrop ${a.id}`;
-    });
-    await ctx.reply(`🪂 *Latest airdrops*\n\n${lines.join('\n')}`, { parse_mode: 'Markdown' });
-  }
-
-  private async onAirdrop(ctx: Context) {
-    const id = this.arg(ctx);
+  private async onAirdrop(ctx: Context, edit = false, idArg?: string) {
+    const id = idArg ?? this.arg(ctx);
     if (!id) {
       await ctx.reply('Usage: /airdrop <id>  (get an id from /airdrops)');
       return;
     }
     const a = await this.airdrops.get(id).catch(() => null);
     if (!a) {
-      await ctx.reply('Airdrop not found. Use /airdrops to see valid ids.');
+      await this.present(
+        ctx,
+        'Airdrop not found. Use /airdrops to see valid ids.',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('« Back to airdrops', 'nav:airdrops')],
+        ]),
+        edit,
+      );
       return;
     }
     const report = a.securityReports?.[0];
@@ -204,31 +335,58 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       a.category ? `🏷️ Category: ${this.md(a.category)}` : '',
       a.difficulty ? `🎯 Difficulty: ${this.md(a.difficulty)}` : '',
       a.deadline ? `⏳ Deadline: ${new Date(a.deadline).toUTCString()}` : '',
-      a.trustScore != null ? `🛡️ Trust score: ${a.trustScore}/100` : '',
+      a.trustScore != null
+        ? `${this.trustEmoji(a.trustScore)} Trust score: ${a.trustScore}/100`
+        : '',
       report
         ? `\n🔎 *Latest scan:* ${report.riskLevel.toUpperCase()} risk (${report.scamProbability}% scam prob.)`
         : '',
     ]
       .filter(Boolean)
       .join('\n');
-    await ctx.reply(out, { parse_mode: 'Markdown' });
+
+    // Build context-aware action buttons from whatever data we have.
+    const site = this.firstLink(a.socialLinks);
+    const host = site ? this.hostOf(site) : undefined;
+    const rows: InlineKeyboardButton[][] = [];
+    if (site) rows.push([Markup.button.url('🌐 Official site', site)]);
+    if (host)
+      rows.push([
+        Markup.button.callback('🛡️ Scan it for scams', `scan:${host}`),
+      ]);
+    rows.push([Markup.button.callback('« Back to airdrops', 'nav:airdrops')]);
+    await this.present(ctx, out, Markup.inlineKeyboard(rows), edit);
   }
 
-  private async onScan(ctx: Context) {
-    const subject = this.arg(ctx);
+  private async onScanPrompt(ctx: Context) {
+    await this.present(
+      ctx,
+      '🛡️ *Scam scanner*\n\nSend `/scan <domain or 0x contract>` and I’ll check it.\nExample: `/scan free-airdrop.xyz`',
+      Markup.inlineKeyboard([[Markup.button.callback('« Menu', 'nav:menu')]]),
+      true,
+    );
+  }
+
+  private async onScan(ctx: Context, edit = false, subjectArg?: string) {
+    const subject = subjectArg ?? this.arg(ctx);
     if (!subject) {
-      await ctx.reply('Usage: /scan <domain or 0x contract>\nExample: /scan free-airdrop.xyz');
+      await ctx.reply(
+        'Usage: /scan <domain or 0x contract>\nExample: /scan free-airdrop.xyz',
+      );
       return;
     }
     const isContract = /^0x[a-fA-F0-9]{40}$/.test(subject);
     const report = await this.security.analyzeAirdrop(
-      isContract ? { contractAddress: subject, chain: 'eth' } : { domain: subject },
+      isContract
+        ? { contractAddress: subject, chain: 'eth' }
+        : { domain: subject },
     );
     const emoji = this.riskEmoji(report.risk_level);
     const warnings = report.warnings.length
       ? '\n\n⚠️ ' + report.warnings.map((w) => this.md(w)).join('\n⚠️ ')
       : '';
-    await ctx.reply(
+    await this.present(
+      ctx,
       [
         `${emoji} *Security scan: ${this.md(subject)}*`,
         '',
@@ -239,7 +397,13 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         `📋 ${this.md(report.recommendation)}`,
         warnings,
       ].join('\n'),
-      { parse_mode: 'Markdown' },
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback('🪂 Airdrops', 'nav:airdrops'),
+          Markup.button.callback('« Menu', 'nav:menu'),
+        ],
+      ]),
+      edit,
     );
   }
 
@@ -259,9 +423,12 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     const score = analysis.wallet_health_score;
     const health = score >= 80 ? '🟢' : score >= 60 ? '🟡' : '🔴';
     const indicators = analysis.risk_indicators.length
-      ? '\n\n⚠️ ' + analysis.risk_indicators.map((r) => this.md(r)).join('\n⚠️ ')
+      ? '\n\n⚠️ ' +
+        analysis.risk_indicators.map((r) => this.md(r)).join('\n⚠️ ')
       : '\n\n✅ No risk indicators found.';
-    const recs = analysis.recommendations.map((r) => `• ${this.md(r)}`).join('\n');
+    const recs = analysis.recommendations
+      .map((r) => `• ${this.md(r)}`)
+      .join('\n');
     await ctx.reply(
       [
         `${health} *Wallet health: ${score}/100*`,
@@ -282,53 +449,90 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     }
     const price = await this.crypto.price(coin);
     if (price == null) {
-      await ctx.reply(`Couldn't find a price for "${coin}". Try a CoinGecko id like \`ethereum\`.`, {
-        parse_mode: 'Markdown',
-      });
+      await ctx.reply(
+        `Couldn't find a price for "${coin}". Try a CoinGecko id like \`ethereum\`.`,
+        {
+          parse_mode: 'Markdown',
+        },
+      );
       return;
     }
-    await ctx.reply(`💵 *${this.md(coin)}* = $${price.toLocaleString('en-US')}`, {
-      parse_mode: 'Markdown',
-    });
+    await ctx.reply(
+      `💵 *${this.md(coin)}* = $${price.toLocaleString('en-US')}`,
+      {
+        parse_mode: 'Markdown',
+      },
+    );
   }
 
-  private async onTrending(ctx: Context) {
+  private async onTrending(ctx: Context, edit = false) {
     const coins = await this.crypto.trending();
     if (!coins.length) {
-      await ctx.reply('No trending data available right now.');
+      await this.present(
+        ctx,
+        'No trending data available right now.',
+        this.footer(),
+        edit,
+      );
       return;
     }
     const lines = coins
       .slice(0, 10)
-      .map((c, i) => `${i + 1}. ${this.md(c.name)} (${this.md(c.symbol.toUpperCase())})`);
-    await ctx.reply(`🔥 *Trending coins*\n\n${lines.join('\n')}`, { parse_mode: 'Markdown' });
+      .map(
+        (c, i) =>
+          `${i + 1}. ${this.md(c.name)} (${this.md(c.symbol.toUpperCase())})`,
+      );
+    await this.present(
+      ctx,
+      `🔥 *Trending coins*\n\n${lines.join('\n')}`,
+      this.footer(),
+      edit,
+    );
   }
 
-  private async onTasks(ctx: Context) {
+  private async onTasks(ctx: Context, edit = false) {
     const user = await this.resolveUser(ctx);
     const tasks = await this.tasks.forUser(user.id);
     if (!tasks.length) {
-      await ctx.reply('You have no tasks yet. Open an airdrop in the app to start a checklist.');
+      await this.present(
+        ctx,
+        'You have no tasks yet. Open an airdrop to start a checklist.',
+        this.footer([Markup.button.callback('🪂 Airdrops', 'nav:airdrops')]),
+        edit,
+      );
       return;
     }
     const lines = tasks.map((t) => {
-      const mark = t.status === 'completed' ? '✅' : t.status === 'in_progress' ? '🔄' : '⬜';
+      const mark =
+        t.status === 'completed'
+          ? '✅'
+          : t.status === 'in_progress'
+            ? '🔄'
+            : '⬜';
       const airdrop = t.airdrop?.name ? ` (${this.md(t.airdrop.name)})` : '';
       return `${mark} ${this.md(t.label)}${airdrop}`;
     });
-    await ctx.reply(`📝 *Your tasks*\n\n${lines.join('\n')}`, { parse_mode: 'Markdown' });
+    await this.present(
+      ctx,
+      `📝 *Your tasks*\n\n${lines.join('\n')}`,
+      this.footer(),
+      edit,
+    );
   }
 
-  private async onProfile(ctx: Context) {
+  private async onProfile(ctx: Context, edit = false) {
     const user = await this.resolveUser(ctx);
     const stats = await this.gamification.stats(user.id);
     const xp = stats?.xp ?? 0;
     const level = stats?.level ?? 1;
     const streak = stats?.streak ?? 0;
     const badges = stats?.badges?.length
-      ? stats.badges.map((b) => `🏅 ${this.md(b.replace(/_/g, ' '))}`).join('\n')
+      ? stats.badges
+          .map((b) => `🏅 ${this.md(b.replace(/_/g, ' '))}`)
+          .join('\n')
       : 'None yet — complete tasks to earn some!';
-    await ctx.reply(
+    await this.present(
+      ctx,
       [
         `👤 *${this.md(user.username ?? 'Hunter')}*`,
         '',
@@ -337,14 +541,23 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         '',
         `*Badges*\n${badges}`,
       ].join('\n'),
-      { parse_mode: 'Markdown' },
+      this.footer([
+        Markup.button.callback('📝 Tasks', 'nav:tasks'),
+        Markup.button.callback('🏆 Leaderboard', 'nav:leaderboard'),
+      ]),
+      edit,
     );
   }
 
-  private async onLeaderboard(ctx: Context) {
+  private async onLeaderboard(ctx: Context, edit = false) {
     const top = await this.gamification.leaderboard(10);
     if (!top.length) {
-      await ctx.reply('Leaderboard is empty — be the first to earn XP! 🏆');
+      await this.present(
+        ctx,
+        'Leaderboard is empty — be the first to earn XP! 🏆',
+        this.footer(),
+        edit,
+      );
       return;
     }
     const medals = ['🥇', '🥈', '🥉'];
@@ -352,23 +565,36 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       const name = row.user?.username ?? row.user?.referralCode ?? 'anon';
       return `${medals[i] ?? `${i + 1}.`} ${this.md(name)} — ${row.xp} XP (lvl ${row.level})`;
     });
-    await ctx.reply(`🏆 *Leaderboard*\n\n${lines.join('\n')}`, { parse_mode: 'Markdown' });
+    await this.present(
+      ctx,
+      `🏆 *Leaderboard*\n\n${lines.join('\n')}`,
+      this.footer([Markup.button.callback('👤 My profile', 'nav:profile')]),
+      edit,
+    );
   }
 
-  private async onReferrals(ctx: Context) {
+  private async onReferrals(ctx: Context, edit = false) {
     const user = await this.resolveUser(ctx);
     const { count } = await this.referrals.forUser(user.id);
     const link = this.referralLink(user.referralCode);
-    await ctx.reply(
+    const rows: InlineKeyboardButton[][] = [];
+    if (link)
+      rows.push([Markup.button.url('🔗 Share my invite', this.shareUrl(link))]);
+    rows.push([Markup.button.callback('« Menu', 'nav:menu')]);
+    await this.present(
+      ctx,
       [
         `🤝 *Your referrals: ${count}*`,
         '',
         `Code: \`${user.referralCode}\``,
-        link ? `Share: ${link}` : 'Set TELEGRAM_BOT_USERNAME to generate share links.',
+        link
+          ? `Link: ${link}`
+          : 'Set TELEGRAM_BOT_USERNAME to generate share links.',
         '',
         'Each friend who joins earns you 100 XP.',
       ].join('\n'),
-      { parse_mode: 'Markdown' },
+      Markup.inlineKeyboard(rows),
+      edit,
     );
   }
 
@@ -390,19 +616,93 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
   /** Text following the command word, e.g. "/scan foo.com" -> "foo.com". */
   private arg(ctx: Context): string {
-    const text = (ctx.message && 'text' in ctx.message ? ctx.message.text : '') ?? '';
+    const text =
+      (ctx.message && 'text' in ctx.message ? ctx.message.text : '') ?? '';
     const space = text.indexOf(' ');
     return space === -1 ? '' : text.slice(space + 1).trim();
   }
 
   private referralLink(code: string): string | '' {
     const username =
-      this.botUsername ?? this.config.get<string>('TELEGRAM_BOT_USERNAME') ?? '';
+      this.botUsername ??
+      this.config.get<string>('TELEGRAM_BOT_USERNAME') ??
+      '';
     return username ? `https://t.me/${username}?start=${code}` : '';
   }
 
   private riskEmoji(level: string): string {
     return level === 'high' ? '🔴' : level === 'medium' ? '🟡' : '🟢';
+  }
+
+  /** Traffic-light badge for a 0–100 trust score. */
+  private trustEmoji(score: number): string {
+    return score >= 70 ? '🟢' : score >= 40 ? '🟡' : '🔴';
+  }
+
+  // ── Inline-keyboard builders ───────────────────────────────────────────────
+
+  /** Home screen keyboard. Adds a share button only when a referral link exists. */
+  private mainMenu(link?: string) {
+    const rows: InlineKeyboardButton[][] = [
+      [
+        Markup.button.callback('🪂 Airdrops', 'nav:airdrops'),
+        Markup.button.callback('🛡️ Scan', 'nav:scan'),
+      ],
+      [
+        Markup.button.callback('👤 Profile', 'nav:profile'),
+        Markup.button.callback('🏆 Leaderboard', 'nav:leaderboard'),
+      ],
+      [
+        Markup.button.callback('📝 Tasks', 'nav:tasks'),
+        Markup.button.callback('🔥 Trending', 'nav:trending'),
+      ],
+    ];
+    if (link)
+      rows.push([Markup.button.url('🤝 Invite friends', this.shareUrl(link))]);
+    return Markup.inlineKeyboard(rows);
+  }
+
+  /** A standard "back to menu" footer, optionally prefixed with extra buttons. */
+  private footer(extra: ReturnType<typeof Markup.button.callback>[] = []) {
+    return Markup.inlineKeyboard([
+      [...extra, Markup.button.callback('« Menu', 'nav:menu')],
+    ]);
+  }
+
+  /** Telegram's native share sheet, pre-filled with the referral link + pitch. */
+  private shareUrl(link: string): string {
+    const text = 'Hunt airdrops safely with SwiftyDrop Guard 🛡️';
+    return `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+  }
+
+  /** Pull the first usable http(s) link out of an airdrop's `socialLinks` JSON. */
+  private firstLink(links: unknown): string | undefined {
+    if (!links || typeof links !== 'object') return undefined;
+    const entries = links as Record<string, unknown>;
+    // Prefer an official site/homepage key before falling back to any link.
+    const preferred = ['website', 'site', 'homepage', 'url'];
+    for (const key of preferred) {
+      const v = entries[key];
+      if (typeof v === 'string' && /^https?:\/\//i.test(v)) return v;
+    }
+    for (const v of Object.values(entries)) {
+      if (typeof v === 'string' && /^https?:\/\//i.test(v)) return v;
+    }
+    return undefined;
+  }
+
+  /** Bare hostname (no `www.`) of a URL, or undefined if it won't parse. */
+  private hostOf(url: string): string | undefined {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Clamp text to `max` chars for button labels (Telegram caps these). */
+  private truncate(s: string, max: number): string {
+    return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
   }
 
   /** Escape the Markdown control chars that break Telegram's legacy Markdown parser. */
@@ -413,7 +713,9 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
   private helpText(): string {
     return (
       'Commands:\n' +
-      TelegramBotService.COMMANDS.map((c) => `/${c.command} — ${c.description}`).join('\n')
+      TelegramBotService.COMMANDS.map(
+        (c) => `/${c.command} — ${c.description}`,
+      ).join('\n')
     );
   }
 }

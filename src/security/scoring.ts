@@ -8,7 +8,7 @@ export function aggregate(signals: Signal[]): SecurityReportOutput {
   const trustRaw = signals.reduce((acc, s) => acc + s.positive, 0);
   const scamRaw = signals.reduce((acc, s) => acc + s.negative, 0);
 
-  const trust_score = clamp(Math.round(trustRaw * 50));   // each +1 of positive ≈ +50
+  const trust_score = clamp(Math.round(trustRaw * 50)); // each +1 of positive ≈ +50
   const scam_probability = clamp(Math.round(scamRaw * 35)); // each +1 of negative ≈ +35
   const risk_level = bandRisk(scam_probability);
   const warnings = signals.map((s) => s.warning).filter(Boolean) as string[];
@@ -41,7 +41,8 @@ function pickRecommendation(risk: RiskLevel) {
 }
 
 function explain(signals: Signal[], trust: number, scam: number) {
-  if (signals.length === 0) return 'Insufficient data to produce a confident assessment.';
+  if (signals.length === 0)
+    return 'Insufficient data to produce a confident assessment.';
   const top = signals
     .map((s) => s.warning ?? s.detail)
     .filter(Boolean)

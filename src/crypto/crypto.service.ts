@@ -39,10 +39,14 @@ export class CryptoService {
     }
   }
 
-  async trending(): Promise<Array<{ id: string; name: string; symbol: string }>> {
+  async trending(): Promise<
+    Array<{ id: string; name: string; symbol: string }>
+  > {
     try {
       const { data } = await firstValueFrom(
-        this.http.get('https://api.coingecko.com/api/v3/search/trending', { timeout: 6000 }),
+        this.http.get('https://api.coingecko.com/api/v3/search/trending', {
+          timeout: 6000,
+        }),
       );
       return (data?.coins ?? []).map((c: any) => ({
         id: c.item.id,

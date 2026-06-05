@@ -17,9 +17,14 @@ export class TasksController {
   @Get(':userId')
   @ApiOperation({
     summary: 'List a user’s tasks',
-    description: 'Returns every airdrop task assigned to a user across all airdrops, with the parent airdrop’s name and deadline joined in.',
+    description:
+      'Returns every airdrop task assigned to a user across all airdrops, with the parent airdrop’s name and deadline joined in.',
   })
-  @ApiParam({ name: 'userId', description: 'User ID (CUID)', example: 'ckxk7g2v90000abcd1234efgh' })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID (CUID)',
+    example: 'ckxk7g2v90000abcd1234efgh',
+  })
   @ApiOkResponse({ type: [AirdropTaskDto] })
   list(@Param('userId') userId: string) {
     return this.tasks.forUser(userId);
@@ -33,7 +38,10 @@ export class TasksController {
   })
   @ApiOkResponse({ type: AirdropTaskDto })
   update(@Body() dto: UpdateTaskDto) {
-    return this.tasks.update(dto.taskId, { status: dto.status, progress: dto.progress });
+    return this.tasks.update(dto.taskId, {
+      status: dto.status,
+      progress: dto.progress,
+    });
   }
 
   @Post('checklist')

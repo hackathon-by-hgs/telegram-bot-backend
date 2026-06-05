@@ -17,7 +17,11 @@ export class GamificationService {
    * Atomically: bump xp, touch streak, recompute level, maybe award badges.
    * Returns the updated stats row.
    */
-  async addXp(userId: string, amount: number, reason: 'task' | 'referral' | 'manual' = 'manual') {
+  async addXp(
+    userId: string,
+    amount: number,
+    reason: 'task' | 'referral' | 'manual' = 'manual',
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const stats =
         (await tx.userStats.findUnique({ where: { userId } })) ??
@@ -34,7 +38,13 @@ export class GamificationService {
 
       return tx.userStats.update({
         where: { userId },
-        data: { xp, level, streak, badges: [...badges], lastActiveAt: new Date() },
+        data: {
+          xp,
+          level,
+          streak,
+          badges: [...badges],
+          lastActiveAt: new Date(),
+        },
       });
     });
   }
@@ -63,10 +73,16 @@ export class GamificationService {
     return 1;
   }
 
-  private async maybeAwardForTasks(tx: any, userId: string, badges: Set<string>) {
-    const completed = await tx.airdropTask.count({ where: { userId, status: 'completed' } });
-    if (completed >= 1) badges.add(BADGES.VERIFIED_EXPLORER as BadgeId);
-    if (completed >= 25) badges.add(BADGES.AIRDROP_MASTER as BadgeId);
+  private async maybeAwardForTasks(
+    tx: any,
+    userId: string,
+    badges: Set<string>,
+  ) {
+    const completed = await tx.airdropTask.count({
+      where: { userId, status: 'completed' },
+    });
+    if (completed >= 1) badges.add(BADGES.VERIFIED_EXPLORER);
+    if (completed >= 25) badges.add(BADGES.AIRDROP_MASTER);
   }
 
   // Hooks called from listeners — kept tiny so listeners stay declarative.

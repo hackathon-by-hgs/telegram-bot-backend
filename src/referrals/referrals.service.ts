@@ -10,7 +10,9 @@ export class ReferralsService {
     const [referrals, count] = await Promise.all([
       this.prisma.referral.findMany({
         where: { referrerId: userId },
-        include: { referredUser: { select: { username: true, createdAt: true } } },
+        include: {
+          referredUser: { select: { username: true, createdAt: true } },
+        },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.referral.count({ where: { referrerId: userId } }),

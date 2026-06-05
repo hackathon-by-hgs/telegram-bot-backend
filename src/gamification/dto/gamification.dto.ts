@@ -1,10 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { UserStatsDto } from '../../common/dto/models.dto';
 
 export class StatsQueryDto {
-  @ApiProperty({ description: 'User ID (CUID) to fetch stats for.', example: 'ckxk7g2v90000abcd1234efgh' })
+  @ApiProperty({
+    description: 'User ID (CUID) to fetch stats for.',
+    example: 'ckxk7g2v90000abcd1234efgh',
+  })
   @IsString()
   @IsNotEmpty()
   userId!: string;
@@ -17,7 +27,8 @@ export class AddXpDto {
   userId!: string;
 
   @ApiProperty({
-    description: 'XP to add (may be negative to deduct). Recomputes level, streak and badges.',
+    description:
+      'XP to add (may be negative to deduct). Recomputes level, streak and badges.',
     example: 50,
   })
   @Type(() => Number)

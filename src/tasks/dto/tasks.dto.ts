@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export const TASK_STATUSES = ['pending', 'in_progress', 'completed'] as const;
@@ -12,12 +20,13 @@ export class UpdateTaskDto {
   taskId!: string;
 
   @ApiPropertyOptional({
-    description: 'New lifecycle status. Setting to `completed` stamps `completedAt` and emits `TASK_COMPLETED`.',
+    description:
+      'New lifecycle status. Setting to `completed` stamps `completedAt` and emits `TASK_COMPLETED`.',
     enum: TASK_STATUSES,
     example: 'completed',
   })
   @IsOptional()
-  @IsIn(TASK_STATUSES as unknown as string[])
+  @IsIn(TASK_STATUSES)
   status?: TaskStatus;
 
   @ApiPropertyOptional({

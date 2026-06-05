@@ -19,9 +19,13 @@ export class CoinGeckoSource implements AirdropSource {
   async fetch(): Promise<NormalizedAirdrop[]> {
     try {
       const { data } = await firstValueFrom(
-        this.http.get('https://api.coingecko.com/api/v3/search/trending', { timeout: 8000 }),
+        this.http.get('https://api.coingecko.com/api/v3/search/trending', {
+          timeout: 8000,
+        }),
       );
-      const coins: Array<{ item: { id: string; name: string; symbol: string } }> = data?.coins ?? [];
+      const coins: Array<{
+        item: { id: string; name: string; symbol: string };
+      }> = data?.coins ?? [];
       return coins.map(({ item }) => ({
         externalId: `${this.name}:${item.id}`,
         name: `${item.name} (${item.symbol.toUpperCase()})`,

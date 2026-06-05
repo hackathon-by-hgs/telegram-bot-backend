@@ -14,6 +14,8 @@ interface SendInput {
   type: NotificationType;
   title: string;
   body: string;
+  /** Optional inline keyboard (Telegram `reply_markup`) attached to the push. */
+  replyMarkup?: unknown;
 }
 
 @Injectable()
@@ -29,7 +31,7 @@ export class NotificationsService {
    * Persist-then-deliver. The DB row is the source of truth; delivery is best-effort.
    * On startup we could replay `status: "queued"` to recover from crashes mid-send.
    */
-  async send({ userId, type, title, body }: SendInput) {
+  async send({ userId, type, title, body, replyMarkup }: SendInput) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) return { ok: false, reason: 'user_not_found' };
 
@@ -43,11 +45,14 @@ export class NotificationsService {
     });
 
     const text = `*${title}*\n${body}`;
-    const result = await this.tg.send(user.telegramId, text);
+    const result = await this.tg.send(user.telegramId, text, { replyMarkup });
 
     await this.prisma.notification.update({
       where: { id: record.id },
-      data: { status: result?.ok === false ? 'failed' : 'sent', sentAt: new Date() },
+      data: {
+        status: result?.ok === false ? 'failed' : 'sent',
+        sentAt: new Date(),
+      },
     });
 
     return { ok: result?.ok !== false, id: record.id };
@@ -61,8 +66,19 @@ export class NotificationsService {
         this.send({
           userId: u.id,
           type: 'new_airdrop',
-          title: 'New airdrop available',
+          title: '🪂 New airdrop available',
           body: `${name} just landed in SwiftyDrop Guard. Tap to view details and trust score.`,
+          // The Telegraf bot's `airdrop:<id>` action handles this tap.
+          replyMarkup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '🪂 View details & trust score',
+                  callback_data: `airdrop:${airdropId}`,
+                },
+              ],
+            ],
+          },
         }),
       ),
     );

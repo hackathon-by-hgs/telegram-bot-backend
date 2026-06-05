@@ -1,4 +1,11 @@
-import { Controller, Get, Headers, HttpStatus, Logger, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Headers,
+  HttpStatus,
+  Logger,
+  Res,
+} from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -19,7 +26,8 @@ export class AppController {
   @Get()
   @ApiOperation({
     summary: 'Service banner',
-    description: 'Returns the static hello string. Useful as a smoke test that the API is reachable.',
+    description:
+      'Returns the static hello string. Useful as a smoke test that the API is reachable.',
   })
   @ApiOkResponse({ schema: { type: 'string', example: 'Hello World!' } })
   getHello(): string {
@@ -29,15 +37,22 @@ export class AppController {
   @Get('health')
   @ApiOperation({
     summary: 'Liveness probe',
-    description: 'Lightweight health check (no DB I/O). Safe to hit from load balancers and container probes.',
+    description:
+      'Lightweight health check (no DB I/O). Safe to hit from load balancers and container probes.',
   })
   @ApiOkResponse({ type: HealthDto })
   health(@Headers('user-agent') userAgent?: string) {
     // Logged so keep-alive pings are visible in the Render dashboard log stream.
     // The GitHub Actions cron sends a "render-keep-alive" User-Agent, making its
     // hits easy to spot/grep among other traffic.
-    this.logger.log(`Liveness ping received (user-agent: ${userAgent ?? 'unknown'})`);
-    return { status: 'ok', service: 'swiftydrop-guard-backend', ts: new Date().toISOString() };
+    this.logger.log(
+      `Liveness ping received (user-agent: ${userAgent ?? 'unknown'})`,
+    );
+    return {
+      status: 'ok',
+      service: 'swiftydrop-guard-backend',
+      ts: new Date().toISOString(),
+    };
   }
 
   @Get('health/ready')
@@ -46,8 +61,14 @@ export class AppController {
     description:
       'Deep check that pings the database (SELECT 1). Returns 200 when all dependencies are up, or 503 when degraded — wire this to load-balancer / k8s readiness probes so traffic only routes once the app can actually serve it.',
   })
-  @ApiOkResponse({ type: ReadinessDto, description: 'All dependencies healthy.' })
-  @ApiServiceUnavailableResponse({ type: ReadinessDto, description: 'One or more dependencies are down.' })
+  @ApiOkResponse({
+    type: ReadinessDto,
+    description: 'All dependencies healthy.',
+  })
+  @ApiServiceUnavailableResponse({
+    type: ReadinessDto,
+    description: 'One or more dependencies are down.',
+  })
   async ready(@Res({ passthrough: true }) res: Response) {
     const report = await this.appService.readiness();
     // passthrough: set the status code but let Nest serialize the JSON body.

@@ -38,8 +38,12 @@ export function verifyTelegramInitData(
     .map(([k, v]) => `${k}=${v}`)
     .join('\n');
 
-  const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest();
-  const computed = createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+  const secretKey = createHmac('sha256', 'WebAppData')
+    .update(botToken)
+    .digest();
+  const computed = createHmac('sha256', secretKey)
+    .update(dataCheckString)
+    .digest('hex');
 
   if (computed !== hash) throw new Error('initData hash mismatch');
 
