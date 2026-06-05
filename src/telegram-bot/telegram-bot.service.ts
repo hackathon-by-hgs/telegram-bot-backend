@@ -122,6 +122,21 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         bot.telegram
           .setMyCommands([...TelegramBotService.COMMANDS])
           .catch((e) => this.log.warn(`setMyCommands failed: ${e.message}`));
+
+        // Wire the persistent chat menu button (bottom-left of the input box) to
+        // the Mini App when a URL is configured. Setting it with no chat_id makes
+        // it the default for every private chat. Falls back to the command list
+        // when WEBAPP_URL is blank so we never push an invalid empty-url button.
+        const webAppUrl = this.webAppUrl();
+        bot.telegram
+          .setChatMenuButton({
+            menuButton: webAppUrl
+              ? { type: 'web_app', text: 'Open App', web_app: { url: webAppUrl } }
+              : { type: 'commands' },
+          })
+          .catch((e) =>
+            this.log.warn(`setChatMenuButton failed: ${e.message}`),
+          );
       })
       .catch((err) =>
         this.log.error(`Bot launch failed: ${(err as Error).message}`),
@@ -657,9 +672,19 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         Markup.button.callback('🔥 Trending', 'nav:trending'),
       ],
     ];
+    // Launch the Mini App in-Telegram. webApp buttons inject the signed
+    // `initData` our /auth/telegram endpoint verifies; only shown when configured.
+    const webAppUrl = this.webAppUrl();
+    if (webAppUrl)
+      rows.push([Markup.button.webApp('🚀 Open App', webAppUrl)]);
     if (link)
       rows.push([Markup.button.url('🤝 Invite friends', this.shareUrl(link))]);
     return Markup.inlineKeyboard(rows);
+  }
+
+  /** Configured HTTPS URL of the Mini App, or undefined when unset/blank. */
+  private webAppUrl(): string | undefined {
+    return this.config.get<string>('WEBAPP_URL')?.trim() || undefined;
   }
 
   /** A standard "back to menu" footer, optionally prefixed with extra buttons. */
