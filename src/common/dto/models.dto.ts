@@ -152,3 +152,41 @@ export class HealthDto {
   @ApiProperty({ description: 'ISO-8601 timestamp', example: '2026-05-27T21:42:00.000Z' })
   ts!: string;
 }
+
+export class DependencyCheckDto {
+  @ApiProperty({ description: 'Whether the dependency answered', enum: ['up', 'down'], example: 'up' })
+  status!: 'up' | 'down';
+
+  @ApiPropertyOptional({
+    description: 'Error message when the dependency is down',
+    example: 'connection refused',
+    nullable: true,
+  })
+  error?: string;
+}
+
+export class ReadinessChecksDto {
+  @ApiProperty({ type: () => DependencyCheckDto, description: 'PostgreSQL reachability (SELECT 1)' })
+  database!: DependencyCheckDto;
+}
+
+export class ReadinessDto {
+  @ApiProperty({
+    description: "'ok' when every dependency is up, otherwise 'degraded'",
+    enum: ['ok', 'degraded'],
+    example: 'ok',
+  })
+  status!: string;
+
+  @ApiProperty({ description: 'True only when the service can fully serve traffic', example: true })
+  ready!: boolean;
+
+  @ApiProperty({ example: 'swiftydrop-guard-backend' })
+  service!: string;
+
+  @ApiProperty({ type: () => ReadinessChecksDto })
+  checks!: ReadinessChecksDto;
+
+  @ApiProperty({ description: 'ISO-8601 timestamp', example: '2026-05-27T21:42:00.000Z' })
+  ts!: string;
+}

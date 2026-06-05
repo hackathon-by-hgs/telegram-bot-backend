@@ -1,0 +1,56 @@
+name: Keep Render Awake
+
+# Render's free web services spin down after ~15 minutes of inactivity, which
+# adds a 30-60s cold start to the next request. This workflow pings the health
+# endpoint every 10 minutes so the instance stays warm.
+#
+# Notes:
+#  - GitHub cron runs in UTC and the minimum granularity is 5 minutes.
+#  - Scheduled runs on free runners can be delayed under load, so we use a
+#    10-minute cadence to keep a safety margin under Render's 15-minute window.
+on:
+  schedule:
+    - cron: '*/4 * * * *'
+  workflow_dispatch: {} # lets you trigger a manual ping from the Actions tab
+
+# If a run is still going when the next is scheduled, cancel the older one
+# instead of piling up.
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping health endpoint
+        env:
+          # Change this if your Render URL changes. Could also be moved to a
+          # repo variable (Settings -> Secrets and variables -> Actions).
+          HEALTH_URL: https://telegram-bot-backend-jy44.onrender.com/api/health
+        run: |
+          echo "Pinging $HEALTH_URL at $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+          # -sS        : silent but still show errors
+          # -w         : print the final HTTP status code
+          # --max-time : give up after 30s (a sleeping instance may need to wake)
+          # --retry    : retry transient failures, incl. the cold-start window
+          # -A         : distinctive User-Agent so it's easy to spot in Render logs
+          HTTP_CODE=$(curl -sS -o /tmp/body.txt -w '%{http_code}' \
+            --max-time 30 \
+            --retry 4 \
+            --retry-delay 15 \
+            --retry-all-errors \
+            -A "render-keep-alive (github-actions; +https://github.com/${GITHUB_REPOSITORY})" \
+            "$HEALTH_URL")
+
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response body: $(cat /tmp/body.txt)"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Keep-alive ping failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Service is awake ✅"
