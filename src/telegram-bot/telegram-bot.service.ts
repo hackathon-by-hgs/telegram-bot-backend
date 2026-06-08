@@ -364,7 +364,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     const site = this.firstLink(a.socialLinks);
     const host = site ? this.hostOf(site) : undefined;
     const rows: InlineKeyboardButton[][] = [];
-    if (site) rows.push([Markup.button.webApp('🌐 Official site', site)]);
+    if (site) rows.push([Markup.button.url('🌐 Official site', site)]);
     if (host)
       rows.push([
         Markup.button.callback('🛡️ Scan it for scams', `scan:${host}`),
@@ -676,7 +676,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     // `initData` our /auth/telegram endpoint verifies; only shown when configured.
     const webAppUrl = this.webAppUrl();
     if (webAppUrl)
-      rows.push([Markup.button.url('🚀 Open App', webAppUrl)]);
+      rows.push([Markup.button.webApp('🚀 Open App', webAppUrl)]);
     if (link)
       rows.push([Markup.button.url('🤝 Invite friends', this.shareUrl(link))]);
     return Markup.inlineKeyboard(rows);
