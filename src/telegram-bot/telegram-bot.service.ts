@@ -364,7 +364,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     const site = this.firstLink(a.socialLinks);
     const host = site ? this.hostOf(site) : undefined;
     const rows: InlineKeyboardButton[][] = [];
-    if (site) rows.push([Markup.button.url('🌐 Official site', site)]);
+    if (site) rows.push([Markup.button.webApp('🌐 Official site', site)]);
     if (host)
       rows.push([
         Markup.button.callback('🛡️ Scan it for scams', `scan:${host}`),
@@ -594,7 +594,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     const link = this.referralLink(user.referralCode);
     const rows: InlineKeyboardButton[][] = [];
     if (link)
-      rows.push([Markup.button.url('🔗 Share my invite', this.shareUrl(link))]);
+      rows.push([Markup.button.webApp('🔗 Share my invite', this.shareUrl(link))]);
     rows.push([Markup.button.callback('« Menu', 'nav:menu')]);
     await this.present(
       ctx,
@@ -678,7 +678,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     if (webAppUrl)
       rows.push([Markup.button.webApp('🚀 Open App', webAppUrl)]);
     if (link)
-      rows.push([Markup.button.url('🤝 Invite friends', this.shareUrl(link))]);
+      rows.push([Markup.button.webApp('🤝 Invite friends', this.shareUrl(link))]);
     return Markup.inlineKeyboard(rows);
   }
 
