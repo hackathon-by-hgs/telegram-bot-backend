@@ -594,7 +594,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     const link = this.referralLink(user.referralCode);
     const rows: InlineKeyboardButton[][] = [];
     if (link)
-      rows.push([Markup.button.webApp('🔗 Share my invite', this.shareUrl(link))]);
+      rows.push([Markup.button.url('🔗 Share my invite', this.shareUrl(link))]);
     rows.push([Markup.button.callback('« Menu', 'nav:menu')]);
     await this.present(
       ctx,
@@ -676,9 +676,9 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     // `initData` our /auth/telegram endpoint verifies; only shown when configured.
     const webAppUrl = this.webAppUrl();
     if (webAppUrl)
-      rows.push([Markup.button.webApp('🚀 Open App', webAppUrl)]);
+      rows.push([Markup.button.url('🚀 Open App', webAppUrl)]);
     if (link)
-      rows.push([Markup.button.webApp('🤝 Invite friends', this.shareUrl(link))]);
+      rows.push([Markup.button.url('🤝 Invite friends', this.shareUrl(link))]);
     return Markup.inlineKeyboard(rows);
   }
 
