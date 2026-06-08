@@ -34,11 +34,42 @@ export class CryptoRankSource implements AirdropSource {
         deadline: r.endDate ? new Date(r.endDate) : undefined,
         category: r.type ?? 'funding',
         difficulty: 'medium',
+        projectUrl: r.link ?? r.website ?? undefined,
+        socialLinks: this.normalizeLinks(r.links ?? r.social),
         source: this.name,
       }));
     } catch (err) {
       this.log.warn(`cryptorank fetch failed: ${(err as Error).message}`);
       return [];
     }
+  }
+
+  /**
+   * CryptoRank exposes links as either an array of {type, value} entries or a
+   * flat {key: url} object depending on plan/version. Normalize both into the
+   * shared {twitter, telegram, website, ...} shape; unknown link types pass
+   * through under their own key.
+   */
+  private normalizeLinks(raw: unknown): Record<string, string> {
+    const KEY_MAP: Record<string, string> = {
+      web: 'website',
+      website: 'website',
+      twitter: 'twitter',
+      x: 'twitter',
+      telegram: 'telegram',
+    };
+    const out: Record<string, string> = {};
+    const put = (type: string, value: unknown) => {
+      if (typeof value !== 'string' || !value) return;
+      const key = KEY_MAP[type.toLowerCase()] ?? type.toLowerCase();
+      out[key] = value;
+    };
+
+    if (Array.isArray(raw)) {
+      for (const entry of raw) put(entry?.type ?? '', entry?.value ?? entry?.url);
+    } else if (raw && typeof raw === 'object') {
+      for (const [k, v] of Object.entries(raw)) put(k, v);
+    }
+    return out;
   }
 }

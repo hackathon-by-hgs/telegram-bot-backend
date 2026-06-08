@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { SecurityService } from '../security/security.service';
+import { SwiftyExService } from '../swiftyex/swiftyex.service';
 
 /**
  * Smart Alert System (spec §2.11). Monitors:
@@ -20,6 +21,7 @@ export class AlertsCron {
     private readonly notifications: NotificationsService,
     private readonly gamification: GamificationService,
     private readonly security: SecurityService,
+    private readonly swiftyEx: SwiftyExService,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -71,6 +73,14 @@ export class AlertsCron {
       });
     }
     this.log.log(`Re-evaluated ${stale.length} airdrops`);
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async swiftyExRatesSync() {
+    // Public feed — no initData. Warms the SwiftyExRate cache so /api/swiftyex/rates
+    // and any rate-driven features serve instantly and survive upstream outages.
+    const rates = await this.swiftyEx.cacheRates();
+    this.log.log(`SwiftyEx rates synced: ${rates.length} assets`);
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)

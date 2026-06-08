@@ -20,11 +20,16 @@ model User {
   referrals     User[]   @relation("Referrals")
   createdAt     DateTime @default(now())
 
+  // AI recommendation preferences:
+  // { categories: string[], chains: string[], riskTolerance: low|medium|high, effort: low|medium|high }
+  preferences   Json?
+
   stats             UserStats?
   tasks             AirdropTask[]
   referralsGranted  Referral[] @relation("ReferralReferrer")
   referralsReceived Referral[] @relation("ReferralReferred")
   notifications     Notification[]
+  swiftyEx          SwiftyExAccount?
 }
 
 model UserStats {
@@ -47,9 +52,18 @@ model Airdrop {
   category        String?
   trustScore      Int?
   difficulty      String?
+  projectUrl      String?  // canonical project/campaign link
   socialLinks     Json?
   source          String
   createdAt       DateTime @default(now())
+
+  // Gemini legitimacy/longevity assessment (separate from the rule-based SecurityReport).
+  aiLegitScore    Int?      // 0-100, higher = more legitimate / promising
+  aiOutlook       String?   // promising | uncertain | likely_dead | scam
+  aiSerious       Boolean?  // is this a serious project with a real future
+  aiFlags         String[]  @default([])
+  aiSummary       String?
+  aiAssessedAt    DateTime?
 
   securityReports SecurityReport[]
   airdropTasks    AirdropTask[]
@@ -103,4 +117,27 @@ model Notification {
   status    String   @default("queued") // queued | sent | failed
   createdAt DateTime @default(now())
   sentAt    DateTime?
+}
+
+// --- SwiftyEx integration (cache of the external exchange Mini App) ---
+// Joined to User by chatId == User.telegramId == SwiftyEx Chat.chat_id.
+// Lets crons / gamification / notifications read SwiftyEx state without a live
+// initData-authenticated call.
+model SwiftyExAccount {
+  userId       String   @id
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatId       String   @unique
+  kycVerified  Boolean  @default(false)
+  kycLevel     Int      @default(0)
+  referralCode String?
+  wallets      Json     @default("[]") // [{ wallet_type, blockchain, balance, address }]
+  syncedAt     DateTime @default(now())
+}
+
+// Cache of the public GET /miniapp/rates feed, refreshed by AlertsCron.
+model SwiftyExRate {
+  asset     String   @id // "btc" | "ethereum" | "usdt" | "naira" ...
+  buyRate   Float
+  sellRate  Float
+  updatedAt DateTime @default(now())
 }

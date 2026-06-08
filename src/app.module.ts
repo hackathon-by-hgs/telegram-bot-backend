@@ -20,6 +20,8 @@ import { GamificationModule } from './gamification/gamification.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
+import { SwiftyExModule } from './swiftyex/swiftyex.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
     GamificationModule,
     NotificationsModule,
     ReferralsModule,
+    SwiftyExModule,
+    AiModule,
     AlertsModule,
     TelegramBotModule,
   ],

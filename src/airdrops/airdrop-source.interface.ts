@@ -6,6 +6,7 @@ export interface NormalizedAirdrop {
   deadline?: Date;
   category?: string;
   difficulty?: string;
+  projectUrl?: string; // canonical project/campaign link
   socialLinks?: Record<string, string>;
   source: string;
 }

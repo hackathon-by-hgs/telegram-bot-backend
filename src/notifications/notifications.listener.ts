@@ -43,6 +43,30 @@ export class NotificationsListener {
     );
   }
 
+  @OnEvent(EVENTS.SWIFTYEX_DEPOSIT_CONFIRMED)
+  onSwiftyExDeposit(payload: {
+    userId: string;
+    asset: string;
+    amount: number;
+  }) {
+    return this.notifications.send({
+      userId: payload.userId,
+      type: 'swiftyex_deposit',
+      title: '💰 Deposit confirmed',
+      body: `+${payload.amount} ${payload.asset.toUpperCase()} landed in your SwiftyEx wallet.`,
+    });
+  }
+
+  @OnEvent(EVENTS.SWIFTYEX_KYC_UPGRADED)
+  onSwiftyExKyc(payload: { userId: string; level: number }) {
+    return this.notifications.send({
+      userId: payload.userId,
+      type: 'swiftyex_kyc',
+      title: '✅ KYC level upgraded',
+      body: `Your SwiftyEx account is now KYC level ${payload.level}. Higher limits unlocked.`,
+    });
+  }
+
   @OnEvent(EVENTS.WALLET_RISK_DETECTED)
   async onWalletRisk(payload: { address: string; score: number }) {
     const user = await this.prisma.user.findUnique({

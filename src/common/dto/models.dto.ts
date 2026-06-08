@@ -131,6 +131,13 @@ export class AirdropDto {
   @ApiPropertyOptional({ example: 'medium', nullable: true })
   difficulty!: string | null;
 
+  @ApiPropertyOptional({
+    description: 'Canonical project/campaign link',
+    example: 'https://www.coingecko.com/en/coins/zksync',
+    nullable: true,
+  })
+  projectUrl!: string | null;
+
   @ApiProperty({
     description: 'Free-form social/contract links (key → URL)',
     example: { twitter: 'https://x.com/zksync', website: 'https://zksync.io' },

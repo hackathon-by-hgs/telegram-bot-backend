@@ -40,6 +40,8 @@ async function bootstrap() {
     .addTag('gamification', 'XP, levels, streaks, badges')
     .addTag('referrals', 'Referral graph')
     .addTag('crypto', 'CoinGecko price feeds')
+    .addTag('swiftyex', 'SwiftyEx exchange Mini App integration')
+    .addTag('ai', 'Gemini-powered scam detection & airdrop recommendations')
     .addTag('notifications', 'Telegram notifications')
     .addTag('health', 'Liveness probes')
     .build();

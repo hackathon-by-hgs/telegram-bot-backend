@@ -4,6 +4,8 @@ import { BADGES, BadgeId } from './badges';
 
 const XP_PER_TASK = 25;
 const XP_PER_REFERRAL = 100;
+const XP_PER_EXCHANGE_LINK = 50;
+const XP_PER_KYC = 150;
 
 @Injectable()
 export class GamificationService {
@@ -21,6 +23,7 @@ export class GamificationService {
     userId: string,
     amount: number,
     reason: 'task' | 'referral' | 'manual' = 'manual',
+    badge?: BadgeId,
   ) {
     return this.prisma.$transaction(async (tx) => {
       const stats =
@@ -35,6 +38,7 @@ export class GamificationService {
       if (reason === 'task') await this.maybeAwardForTasks(tx, userId, badges);
       if (streak >= 7) badges.add(BADGES.DAILY_GRINDER);
       if (level >= 10) badges.add(BADGES.SECURITY_EXPERT);
+      if (badge) badges.add(badge);
 
       return tx.userStats.update({
         where: { userId },
@@ -92,5 +96,18 @@ export class GamificationService {
 
   rewardReferral(userId: string) {
     return this.addXp(userId, XP_PER_REFERRAL, 'referral');
+  }
+
+  rewardSwiftyExLink(userId: string) {
+    return this.addXp(
+      userId,
+      XP_PER_EXCHANGE_LINK,
+      'manual',
+      BADGES.EXCHANGE_LINKED,
+    );
+  }
+
+  rewardKyc(userId: string) {
+    return this.addXp(userId, XP_PER_KYC, 'manual', BADGES.KYC_VERIFIED);
   }
 }

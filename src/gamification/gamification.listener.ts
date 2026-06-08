@@ -16,4 +16,14 @@ export class GamificationListener {
   onReferralCompleted(payload: { referrerId: string }) {
     return this.gamification.rewardReferral(payload.referrerId);
   }
+
+  @OnEvent(EVENTS.SWIFTYEX_LINKED)
+  onSwiftyExLinked(payload: { userId: string }) {
+    return this.gamification.rewardSwiftyExLink(payload.userId);
+  }
+
+  @OnEvent(EVENTS.SWIFTYEX_KYC_UPGRADED)
+  onSwiftyExKyc(payload: { userId: string }) {
+    return this.gamification.rewardKyc(payload.userId);
+  }
 }

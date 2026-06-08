@@ -64,6 +64,7 @@ export class AirdropsService {
           deadline: a.deadline,
           category: a.category,
           difficulty: a.difficulty,
+          projectUrl: a.projectUrl,
           socialLinks: a.socialLinks ?? {},
           source: a.source,
         },

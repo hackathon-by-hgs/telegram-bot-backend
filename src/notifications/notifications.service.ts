@@ -7,7 +7,10 @@ export type NotificationType =
   | 'deadline_alert'
   | 'scam_warning'
   | 'wallet_risk'
-  | 'task_update';
+  | 'task_update'
+  | 'swiftyex_deposit'
+  | 'swiftyex_kyc'
+  | 'rate_alert';
 
 interface SendInput {
   userId: string;

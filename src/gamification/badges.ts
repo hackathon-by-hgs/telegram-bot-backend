@@ -5,6 +5,8 @@ export const BADGES = {
   AIRDROP_MASTER: 'airdrop_master',
   DAILY_GRINDER: 'daily_grinder',
   SECURITY_EXPERT: 'security_expert',
+  EXCHANGE_LINKED: 'exchange_linked', // connected a SwiftyEx account
+  KYC_VERIFIED: 'kyc_verified', // completed SwiftyEx KYC
 } as const;
 
 export type BadgeId = (typeof BADGES)[keyof typeof BADGES];
